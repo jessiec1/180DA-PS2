@@ -86,8 +86,14 @@ module p2_regfile
   always_ff @(posedge clk_i) begin
     if (!rst_ni) begin
       // <-- fill in: clear all registers
+      for (int i = 0; i < NUM_REGS; i++) begin
+        regs_q[i] <= '0;
+      end
+    end else begin
+      if (wr_i.en && wr_i.addr != '0) begin
+        regs_q[wr_i.addr] <= wr_i.data;
+      end
     end
-    // <-- fill in: the guarded write
   end
 
   // --------------------------------------------------------------------------
@@ -98,6 +104,10 @@ module p2_regfile
   // and the same for rs2. Get this working and passing the first group of
   // testbench checks before you touch part (c).
   // --------------------------------------------------------------------------
+  
+  
+  //assign rs1_data_o = (rs1_addr_i == '0) ? '0 : regs_q[rs1_addr_i];
+  //assign rs2_data_o = (rs2_addr_i == '0) ? '0 : regs_q[rs2_addr_i];
 
   // --------------------------------------------------------------------------
   // TODO 2c -- write-to-read bypass (also called read-during-write forwarding).
@@ -129,8 +139,20 @@ module p2_regfile
   // That is why it is a parameter here and an architectural decision in a
   // real design.
   // --------------------------------------------------------------------------
+  //slightly cleaner way to visualize it
+  // always_comb begin
+  //   if (bypass_en_i == 'b0) begin
+  //     rs1_data_o = (rs1_addr_i == '0) ? '0 : regs_q[rs1_addr_i];
+  //     rs2_data_o = (rs2_addr_i == '0) ? '0 : regs_q[rs2_addr_i];
+  //   end else begin
+  //     rs1_data_o = (wr_i.en && wr_i.addr != 'b0 && wr_i.addr == rs1_addr_i) ? wr_i.data : (rs1_addr_i == '0) ? '0 : regs_q[rs1_addr_i];
+  //     rs2_data_o = (wr_i.en && wr_i.addr != 'b0 && wr_i.addr == rs2_addr_i) ? wr_i.data : (rs2_addr_i == '0) ? '0 : regs_q[rs2_addr_i];
+  //   end
+  // end
 
-  assign rs1_data_o = '0;   // <-- replace (2b, then extend for 2c)
-  assign rs2_data_o = '0;   // <-- replace (2b, then extend for 2c)
+
+
+  assign rs1_data_o = (bypass_en_i && wr_i.en && wr_i.addr != 'b0 && wr_i.addr == rs1_addr_i) ? wr_i.data : (rs1_addr_i == '0) ? '0 : regs_q[rs1_addr_i];   // <-- replace (2b, then extend for 2c)
+  assign rs2_data_o = (bypass_en_i && wr_i.en && wr_i.addr != 'b0 && wr_i.addr == rs2_addr_i) ? wr_i.data : (rs2_addr_i == '0) ? '0 : regs_q[rs2_addr_i];   // <-- replace (2b, then extend for 2c)
 
 endmodule
